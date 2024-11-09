@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block title %}Home - ComplyTech{% endblock %}
+
+{% block content %}
+<style>
+    /* General styles */
+    .home-container {
+        margin: 2em auto;
+        max-width: 800px;
+        padding: 1em;
+    }
+
+    h1 {
+        text-align: center;
+        font-size: 2em;
+        margin-bottom: 1em;
+    }
+
+    section {
+        margin-bottom: 2em;
+        padding: 1em;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+    }
+
+    h2 {
+        font-size: 1.5em;
+        margin-bottom: 0.5em;
+    }
+
+    p,
+    li {
+        font-size: 1em;
+        line-height: 1.5em;
+    }
+
+    ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    li {
+        margin-bottom: 1em;
+    }
+
+    li strong {
+        font-weight: bold;
+    }
+
+    a {
+        color: #007BFF;
+        text-decoration: none;
+    }
+
+    a:hover {
+        text-decoration: underline;
+    }
+</style>
+
+<div class="home-container">
+    <h1>ComplyTech</h1>
+
+    <section class="about">
+        <h2>About:</h2>
+        <p>
+            This website is a student effort to offer help to companies attempting to achieve compliance with the NCA
+            ECC framework.
+        </p>
+    </section>
+
+    <section class="features">
+        <h2>Features:</h2>
+        <ul>
+            <li>
+                <strong>Audit Management:</strong> This website allows you to create NCA ECC audit projects, invite
+                participants to join your projects, manage your project, and oversee progress through a dashboard.
+                <a href="#">Projects Page</a>
+            </li>
+            <li>
+                <strong>Documentation:</strong> This website allows you to access the entirety of the NCA ECC domains
+                and sub-domains in an easy-to-use tree.
+                <a href="#">Tree Page</a>
+            </li>
+        </ul>
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            background-color: black;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5em 1em;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 1em;
+            font-weight: bold;
+            /* Added to make text bold */
+        }
+
+        .navbar a:hover {
+            text-decoration: underline;
+        }
+
+        .content {
+            margin: 2em;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="navbar">
+        <div>
+            <a href="{% url 'home' %}">Home</a>
+            <a href="#">Audit Projects</a>
+            <a href="#">Help</a>
+        </div>
+        <div>
+            {% if user.is_authenticated %}
+            <a href="#">Logout</a>
+            {% else %}
+            <a href="#">Login</a>
+            {% endif %}
+        </div>
+    </header>
+    <main class="content">
+        {% block content %}
+        <!-- Page-specific content goes here -->
+        {% endblock %}
+    </main>
+</body>
+
+</html>
