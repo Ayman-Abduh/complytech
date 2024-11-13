@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     # Local
     "homeabout",
     "accounts",
+    "projects",
 ]
 
 MIDDLEWARE = [
@@ -132,8 +133,17 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "home"
 
-# NEW
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"  # new
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"  # new
 CRISPY_TEMPLATE_PACK = "bootstrap5"  # new
+
+
+# NEW
+# Email stuff
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "#"  # SMTP Server
+EMAIL_PORT = 587  # Port for sending email
+EMAIL_USE_TLS = True  # Enable TLS encryption
+EMAIL_HOST_USER = "#"  # Your Gmail address
+EMAIL_HOST_PASSWORD = "#"  # Your Gmail app password or regular password
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER  # Default 'From' email
