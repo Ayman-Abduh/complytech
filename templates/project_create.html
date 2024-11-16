@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}Create New Project{% endblock title %}
+{% block content %}
+<h1 style="margin: 20px auto;">Create New Project</h1>
+<form method="post">
+    {% csrf_token %}
+    {{form|crispy}}
+    <button class="btn btn-success ml-2" type="submit">Create+</button>
+</form>
+{% endblock content %}

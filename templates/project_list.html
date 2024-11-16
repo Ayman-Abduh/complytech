@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block title %}
+Projects List
+{% endblock %}
+
+{% block content %}
+<style>
+    /* General styling */
+    body {
+        font-family: Arial, sans-serif;
+    }
+
+    /* Header (h1) styling */
+    h1 {
+        text-align: left;
+        margin: 40px 0 20px 0;
+        padding-left: 10px;
+    }
+
+    /* Table styling */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 30px auto;
+    }
+
+    table th,
+    table td {
+        text-align: center;
+        vertical-align: middle;
+        padding: 8px;
+        border: 1px solid #ddd;
+    }
+
+    table th {
+        background-color: #f2f2f2;
+    }
+
+    /* Button styling */
+    .new-project-btn {
+        display: block;
+        margin: 30px auto;
+        padding: 10px 20px;
+        background-color: black;
+        color: white;
+        text-align: center;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    .new-project-btn:hover {
+        background-color: #444;
+    }
+</style>
+
+<h1>Hello {{ user.username | title }}</h1>
+
+<!-- Projects where the user is the manager -->
+<h2>Projects You Manage:</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Project Name</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if manager_projects %}
+        {% for project in manager_projects %}
+        <tr>
+            <td><a href="#">{{ project.project.title | title }}</a></td>
+            <td>{{ project.project.description }}</td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+            <td colspan="2">You are not managing any projects.</td>
+        </tr>
+        {% endif %}
+    </tbody>
+</table>
+
+<!-- Projects where the user is a member -->
+<h2>Projects You Are a Member Of:</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Project Name</th>
+            <th>Description</th>
+            <th>Project Manager</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if member_projects %}
+        {% for project in member_projects %}
+        <tr>
+            <td><a href="#">{{ project.project.title | title }}</a></td>
+            <td>{{ project.project.description }}</td>
+            <td>{{ project.project.created_by.username | title }}</td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+            <td colspan="3">You are not a member of any projects.</td>
+        </tr>
+        {% endif %}
+    </tbody>
+</table>
+
+<!-- New Project Button -->
+<button class="new-project-btn">
+    <a style="text-decoration: none; color: white;" href="{% url 'project_create' %}">
+        New Project +
+    </a>
+</button>
+{% endblock content %}

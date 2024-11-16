@@ -1,7 +1,39 @@
 from django.contrib import admin
-from .models import Domain, Subdomain, Control
+from .models import Domain, Subdomain, Control, Project, ProjectMembership
 
-# Register your models here.
-admin.site.register(Domain)
-admin.site.register(Subdomain)
-admin.site.register(Control)
+
+@admin.register(Domain)
+class DomainAdmin(admin.ModelAdmin):
+    readonly_fields = ("name", "description")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(Subdomain)
+class SubdomainAdmin(admin.ModelAdmin):
+    readonly_fields = ("name", "objective", "domain")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(Control)
+class ControlAdmin(admin.ModelAdmin):
+    readonly_fields = ("code", "description", "subdomain")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+admin.site.register(Project)
+admin.site.register(ProjectMembership)
