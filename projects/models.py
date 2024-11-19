@@ -69,3 +69,45 @@ class ProjectMembership(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.project.title} ({self.role})"
+
+
+class ProjectControl(models.Model):
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="project_controls"
+    )
+    control = models.ForeignKey(
+        Control, on_delete=models.CASCADE, related_name="project_controls"
+    )
+    auditor = models.ForeignKey(
+        "auth.User", on_delete=models.SET_NULL, null=True, blank=True
+    )
+    # Project-specific auditing information
+    status = models.CharField(
+        max_length=10,
+        choices=[
+            ("Complete", "Complete"),
+            ("Incomplete", "Incomplete"),
+        ],
+        default="Incomplete",
+    )
+    notes = models.TextField(blank=True, null=True)
+    risk = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.project.title} - {self.control.name}"
+
+
+class Evidence(models.Model):
+    project_control = models.ForeignKey(
+        ProjectControl, on_delete=models.CASCADE, related_name="evidences"
+    )
+    document_name = models.CharField(max_length=255)
+    sha_hash = models.CharField(max_length=64)  # SHA-256 hash of the document
+    uploaded_by = models.ForeignKey("auth.User", on_delete=models.CASCADE)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    metadata = models.JSONField(blank=True, null=True)
+
+    def __str__(self):
+        return (
+            f"Evidence for {self.project_control.control.name} - {self.document_name}"
+        )

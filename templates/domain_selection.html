@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+{% extends 'base.html' %}
+
+{% block title %}Select Domain{% endblock title %}
+
+{% block content %}
+<h1>Select a Domain and Subdomain</h1>
+
+<form method="POST">
+    {% csrf_token %}
+    <label for="domain">Domain:</label>
+    <select name="domain" id="domain-select">
+        <option value="">-- Select a Domain --</option>
+        {% for domain in domains %}
+        <option value="{{ domain.id }}">{{ domain.name }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="subdomain">Subdomain:</label>
+    <select name="subdomain" id="subdomain-select">
+        <option value="">-- Select a Subdomain --</option>
+        <!-- Subdomains will be dynamically added here -->
+    </select>
+
+    <button type="submit">Next</button>
+</form>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const domainSelect = document.getElementById("domain-select");
+        const subdomainSelect = document.getElementById("subdomain-select");
+
+        // Event listener for the domain dropdown
+        domainSelect.addEventListener("change", function () {
+            const domainId = domainSelect.value;
+
+            // Clear existing options in the subdomain dropdown
+            subdomainSelect.innerHTML = '<option value="">-- Select a Subdomain --</option>';
+
+            if (domainId) {
+                // Fetch subdomains for the selected domain
+                fetch(`/projects/get-subdomains/${domainId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.subdomains && data.subdomains.length > 0) {
+                            // Populate subdomain dropdown
+                            data.subdomains.forEach(subdomain => {
+                                const option = document.createElement("option");
+                                option.value = subdomain.id;
+                                option.textContent = subdomain.name;
+                                subdomainSelect.appendChild(option);
+                            });
+                        } else {
+                            alert("No subdomains found for the selected domain.");
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error fetching subdomains:", error);
+                        alert("An error occurred while fetching subdomains.");
+                    });
+            }
+        });
+    });
+</script>
+{% endblock content%}

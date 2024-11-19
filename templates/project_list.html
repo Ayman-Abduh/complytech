@@ -3,7 +3,7 @@
 
 {% block title %}
 Projects List
-{% endblock %}
+{% endblock title%}
 
 {% block content %}
 <style>
@@ -98,7 +98,7 @@ Projects List
         {% if member_projects %}
         {% for project in member_projects %}
         <tr>
-            <td><a href="#">{{ project.project.title | title }}</a></td>
+            <td><a href="{% url 'domain_selection' project.pk %}">{{ project.project.title | title }}</a></td>
             <td>{{ project.project.description }}</td>
             <td>{{ project.project.created_by.username | title }}</td>
         </tr>
