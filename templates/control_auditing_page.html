@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% block title %}Control Audit{% endblock title%}
+
+{% block content %}
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f8f9fa;
+        margin: 0;
+        padding: 0;
+    }
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        margin: 20px auto;
+        max-width: 800px;
+        background-color: #ffffff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .control-details {
+        margin-bottom: 20px;
+        text-align: center;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #f1f3f5;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .control-details h2 {
+        margin-bottom: 10px;
+        color: #333;
+    }
+
+    .form-container {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .form-container form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .form-container label {
+        font-weight: bold;
+        color: #555;
+    }
+
+    .form-container input,
+    .form-container textarea,
+    .form-container select,
+    .form-container button {
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        outline: none;
+        width: 100%;
+    }
+
+    .form-container button {
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .form-container button:hover {
+        background-color: #0056b3;
+    }
+
+    .form-footer {
+        margin-top: 20px;
+        text-align: right;
+    }
+</style>
+<div class="container">
+    <div class="control-details">
+        <h2>Auditing Control: {{ control.code }}</h2>
+        <p>{{ control.description }}</p>
+    </div>
+    <div class="form-container">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <h3>Control Status</h3>
+            {{ project_control_form.as_p }}
+
+            <h3>Evidence Upload</h3>
+            {{ evidence_form.as_p }}
+
+            <div class="form-footer">
+                {% if is_last_control %}
+                <button type="submit">Finish</button>
+                {% else %}
+                <button type="submit">Next</button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock content %}

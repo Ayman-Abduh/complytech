@@ -1,5 +1,5 @@
 from django import forms
-from .models import Project
+from .models import Project, ProjectControl, Evidence
 
 
 class ProjectForm(forms.ModelForm):
@@ -19,3 +19,21 @@ class ProjectForm(forms.ModelForm):
             ),  # Date picker
             "domains": forms.CheckboxSelectMultiple(),  # Checkbox selection for domains
         }
+
+
+class ProjectControlForm(forms.ModelForm):
+    class Meta:
+        model = ProjectControl
+        fields = ["notes", "risk", "status"]
+        widgets = {
+            "notes": forms.Textarea(attrs={"rows": 3}),
+            "risk": forms.Textarea(attrs={"rows": 3}),
+        }
+
+
+class EvidenceForm(forms.Form):
+    uploaded_file = forms.FileField(
+        required=False,
+        label="Upload Evidence",
+        widget=forms.ClearableFileInput(attrs={"class": "form-control"}),
+    )

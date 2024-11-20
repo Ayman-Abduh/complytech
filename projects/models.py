@@ -94,7 +94,7 @@ class ProjectControl(models.Model):
     risk = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.project.title} - {self.control.name}"
+        return f"{self.project.title} - {self.control.code}"
 
 
 class Evidence(models.Model):
@@ -105,9 +105,8 @@ class Evidence(models.Model):
     sha_hash = models.CharField(max_length=64)  # SHA-256 hash of the document
     uploaded_by = models.ForeignKey("auth.User", on_delete=models.CASCADE)
     uploaded_at = models.DateTimeField(auto_now_add=True)
-    metadata = models.JSONField(blank=True, null=True)
 
     def __str__(self):
         return (
-            f"Evidence for {self.project_control.control.name} - {self.document_name}"
+            f"Evidence for {self.project_control.control.code} - {self.document_name}"
         )

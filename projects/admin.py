@@ -1,5 +1,13 @@
 from django.contrib import admin
-from .models import Domain, Subdomain, Control, Project, ProjectMembership
+from .models import (
+    Domain,
+    Subdomain,
+    Control,
+    Project,
+    ProjectMembership,
+    ProjectControl,
+    Evidence,
+)
 
 
 @admin.register(Domain)
@@ -37,3 +45,5 @@ class ControlAdmin(admin.ModelAdmin):
 
 admin.site.register(Project)
 admin.site.register(ProjectMembership)
+admin.site.register(ProjectControl)
+admin.site.register(Evidence)

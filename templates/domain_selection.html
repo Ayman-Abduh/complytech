@@ -1,64 +1,166 @@
 <!DOCTYPE html>
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}Select Domain{% endblock title %}
+{% block title %}Select Domain and Subdomain{% endblock %}
 
 {% block content %}
-<h1>Select a Domain and Subdomain</h1>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+    }
 
-<form method="POST">
-    {% csrf_token %}
-    <label for="domain">Domain:</label>
-    <select name="domain" id="domain-select">
-        <option value="">-- Select a Domain --</option>
-        {% for domain in domains %}
-        <option value="{{ domain.id }}">{{ domain.name }}</option>
-        {% endfor %}
-    </select>
+    .container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
 
-    <label for="subdomain">Subdomain:</label>
-    <select name="subdomain" id="subdomain-select">
-        <option value="">-- Select a Subdomain --</option>
-        <!-- Subdomains will be dynamically added here -->
-    </select>
+    .card {
+        background-color: #fff;
+        border-radius: 8px;
+        overflow: hidden;
+    }
 
-    <button type="submit">Next</button>
-</form>
+    .card-header {
+        background-color: #007bff;
+        color: white;
+        padding: 15px;
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .form-select {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+
+    .form-select:disabled {
+        background-color: #f8f9fa;
+        cursor: not-allowed;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 10px 15px;
+        font-size: 16px;
+        font-weight: bold;
+        color: white;
+        background-color: #0d6efd;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-align: center;
+    }
+
+    .btn:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+    }
+
+    .btn:hover:not(:disabled) {
+        background-color: #0d6efd;
+    }
+</style>
+
+<div class="container">
+    <div class="card">
+        <div class="card-header">Select a Domain and Subdomain</div>
+        <div class="card-body">
+            <form id="domainForm" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_domain" class="form-label">Domain:</label>
+                    <select id="id_domain" name="domain" class="form-select">
+                        <option value="" selected disabled>Select a domain</option>
+                        {% for domain in domains %}
+                        <option value="{{ domain.id }}">{{ domain.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="id_subdomain" class="form-label">Subdomain:</label>
+                    <select id="id_subdomain" name="subdomain" class="form-select" disabled>
+                        <option value="" selected disabled>Select a subdomain</option>
+                    </select>
+                </div>
+                <button id="continueButton" type="submit" class="btn" disabled>Continue to Auditing</button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const domainSelect = document.getElementById("domain-select");
-        const subdomainSelect = document.getElementById("subdomain-select");
+    document.addEventListener("DOMContentLoaded", () => {
+        const domainSelect = document.getElementById("id_domain");
+        const subdomainSelect = document.getElementById("id_subdomain");
+        const continueButton = document.getElementById("continueButton");
 
-        // Event listener for the domain dropdown
-        domainSelect.addEventListener("change", function () {
+        subdomainSelect.disabled = true;
+        continueButton.disabled = true;
+
+        domainSelect.addEventListener("change", async () => {
             const domainId = domainSelect.value;
 
-            // Clear existing options in the subdomain dropdown
-            subdomainSelect.innerHTML = '<option value="">-- Select a Subdomain --</option>';
+            // Reset subdomain dropdown and button
+            subdomainSelect.innerHTML = `
+            <option value="" selected disabled>Select a subdomain</option>
+        `;
+            subdomainSelect.disabled = true;
+            continueButton.disabled = true;
 
             if (domainId) {
-                // Fetch subdomains for the selected domain
-                fetch(`/projects/get-subdomains/${domainId}/`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.subdomains && data.subdomains.length > 0) {
-                            // Populate subdomain dropdown
-                            data.subdomains.forEach(subdomain => {
-                                const option = document.createElement("option");
-                                option.value = subdomain.id;
-                                option.textContent = subdomain.name;
-                                subdomainSelect.appendChild(option);
-                            });
-                        } else {
-                            alert("No subdomains found for the selected domain.");
-                        }
-                    })
-                    .catch(error => {
-                        console.error("Error fetching subdomains:", error);
-                        alert("An error occurred while fetching subdomains.");
-                    });
+                try {
+                    const response = await fetch(`/projects/get-subdomains/${domainId}/`);
+                    const data = await response.json(); // Parse the JSON response
+                    const subdomains = data.subdomains; // Extract the subdomains array
+
+                    console.log("Subdomains response:", subdomains); // Debugging output
+
+                    if (Array.isArray(subdomains)) {
+                        subdomains.forEach(subdomain => {
+                            const option = document.createElement("option");
+                            option.value = subdomain.id;
+                            option.textContent = subdomain.name;
+                            subdomainSelect.appendChild(option);
+                        });
+
+                        subdomainSelect.disabled = false; // Enable subdomain dropdown
+                    } else {
+                        throw new Error("Subdomains data is not an array.");
+                    }
+                } catch (error) {
+                    console.error("Error fetching subdomains:", error);
+                    alert("Unable to fetch subdomains. Check your internet connection or contact support.");
+                }
             }
         });
+
+        subdomainSelect.addEventListener("change", () => {
+            continueButton.disabled = !subdomainSelect.value; // Enable button only if subdomain selected
+        });
     });
+
 </script>
-{% endblock content%}
+
+{% endblock %}

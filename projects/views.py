@@ -1,12 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import ProjectMembership, Project, Subdomain, Domain
+from .models import ProjectMembership, Project, Subdomain, Domain, Control, Evidence
 from django.urls import reverse
 from django.views import View
 from django.views.generic import ListView
 from django.views.generic.edit import CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .forms import ProjectForm
+from .forms import ProjectForm, ProjectControlForm, EvidenceForm
 from django.http import JsonResponse
+import hashlib
 
 
 # Create your views here.
@@ -15,7 +16,6 @@ from django.http import JsonResponse
 class ProjectListView(LoginRequiredMixin, ListView):
     model = ProjectMembership
     template_name = "project_list.html"
-    context_object_name = "projectmembership_list"  # Can still be used if needed
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -53,7 +53,7 @@ class ProjectCreateView(LoginRequiredMixin, CreateView):
         return reverse("project_list")
 
 
-class DomainSelectionView(View):
+class DomainSelectionView(LoginRequiredMixin, View):
     def get(self, request, project_id):
         # Get the project and its domains
         project = get_object_or_404(Project, id=project_id)
@@ -86,9 +86,115 @@ def get_subdomains(request, domain_id):
         return JsonResponse({"error": "Domain not found."}, status=404)
 
 
-class AuditStartView(View):
+class AuditStartView(LoginRequiredMixin, View):
     def get(self, request, project_id, subdomain_id):
-        pass
+        project = get_object_or_404(Project, id=project_id)
+        subdomain = get_object_or_404(Subdomain, id=subdomain_id)
+
+        # Get the current control index from the query parameter
+        try:
+            control_index = int(request.GET.get("control_index", 0))
+        except ValueError:
+            control_index = 0  # Default to the first control if conversion fails
+            # Fetch all controls related to the subdomain
+        controls = list(Control.objects.filter(subdomain=subdomain))
+
+        # Check if the control_index is valid
+        if control_index >= len(controls):
+            # Redirect to a summary or finish page if no controls are left
+            return redirect(reverse("project_list"))
+
+        # Get the current control
+        control = controls[control_index]
+
+        # Create forms for the control
+        project_control_form = ProjectControlForm(prefix=f"control_{control.id}")
+        evidence_form = EvidenceForm(prefix=f"control_evidence_{control.id}")
+
+        return render(
+            request,
+            "control_auditing_page.html",
+            {
+                "project": project,
+                "subdomain": subdomain,
+                "control": control,
+                "project_control_form": project_control_form,
+                "evidence_form": evidence_form,
+                "control_index": control_index,
+                "total_controls": len(controls),
+            },
+        )
 
     def post(self, request, project_id, subdomain_id):
-        pass
+        project = get_object_or_404(Project, id=project_id)
+        subdomain = get_object_or_404(Subdomain, id=subdomain_id)
+
+        # Get the current control index from the query parameter
+        control_index = int(request.GET.get("control_index", 0))
+
+        # Fetch all controls related to the subdomain
+        controls = list(Control.objects.filter(subdomain=subdomain))
+
+        if control_index >= len(controls):
+            # Redirect to a summary or finish page if no controls are left
+            return redirect(reverse("project_list"))
+
+        # Get the current control
+        control = controls[control_index]
+
+        # Instantiate the forms with POST data
+        project_control_form = ProjectControlForm(
+            request.POST, prefix=f"control_{control.id}"
+        )
+        evidence_form = EvidenceForm(
+            request.POST, request.FILES, prefix=f"control_evidence_{control.id}"
+        )
+
+        # Validate the forms
+        if project_control_form.is_valid() and evidence_form.is_valid():
+            # Save the ProjectControl instance
+            project_control = project_control_form.save(commit=False)
+            project_control.project = project
+            project_control.control = control
+            project_control.auditor = request.user
+            project_control.save()
+
+            # Check if a file was uploaded and handle it
+            uploaded_file = evidence_form.cleaned_data.get("uploaded_file")
+            if uploaded_file:
+                document_name = uploaded_file.name
+
+                # Calculate SHA-256 hash of the uploaded file
+                sha256_hash = hashlib.sha256()
+                for chunk in uploaded_file.chunks():
+                    sha256_hash.update(chunk)
+                sha_hash = sha256_hash.hexdigest()
+
+                # Save the Evidence instance
+                Evidence.objects.create(
+                    project_control=project_control,
+                    document_name=document_name,
+                    sha_hash=sha_hash,
+                    uploaded_by=request.user,
+                )
+
+            # Move to the next control
+            next_control_index = control_index + 1
+            return redirect(
+                f"{reverse('audit_start', kwargs={'project_id': project_id, 'subdomain_id': subdomain_id})}?control_index={next_control_index}"
+            )
+
+        # Re-render the page with errors if the forms are invalid
+        return render(
+            request,
+            "control_auditing_page.html",
+            {
+                "project": project,
+                "subdomain": subdomain,
+                "control": control,
+                "project_control_form": project_control_form,
+                "evidence_form": evidence_form,
+                "control_index": control_index,
+                "total_controls": len(controls),
+            },
+        )
