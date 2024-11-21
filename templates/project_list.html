@@ -98,7 +98,7 @@ Projects List
         {% if member_projects %}
         {% for project in member_projects %}
         <tr>
-            <td><a href="{% url 'domain_selection' project.project.id %}">{{ project.project.title | title }}</a></td>
+            <td><a href="{% url 'overview' project.project.id %}">{{ project.project.title | title }}</a></td>
             <td>{{ project.project.description }}</td>
             <td>{{ project.project.created_by.username | title }}</td>
         </tr>

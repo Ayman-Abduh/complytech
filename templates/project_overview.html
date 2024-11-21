@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block title %}
+Projects Overview
+{% endblock title%}
+
+{% block content %}
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f8f9fa;
+        margin: 0;
+        padding: 0;
+    }
+
+    .container {
+        max-width: 1000px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+        color: #333;
+        font-weight: bold;
+        margin-bottom: 30px;
+    }
+
+    h2 {
+        color: #333;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+    }
+
+    th,
+    td {
+        text-align: left;
+        padding: 10px;
+        border: 1px solid #ddd;
+    }
+
+    th {
+        background-color: #f1f3f5;
+    }
+
+    .complete {
+        background-color: #d4edda;
+    }
+
+    .incomplete {
+        background-color: #f8d7da;
+    }
+
+    .auditor {
+        color: #555;
+        font-style: italic;
+    }
+
+    .add-entry-link {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 16px;
+        text-align: center;
+        transition: background-color 0.3s ease;
+    }
+
+    .add-entry-link:hover {
+        background-color: #0056b3;
+        color: #fff
+    }
+
+    .add-entry-container {
+        text-align: center;
+        margin-top: 20px;
+    }
+</style>
+<div class="container">
+    <h1>Project Overview: {{ project.title | title}}</h1>
+    {% for domain_info in domain_data %}
+    <h2>Domain: {{ domain_info.domain.name }}</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Subdomain</th>
+                <th>Status</th>
+                <th>Auditor</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for subdomain in domain_info.subdomains %}
+            <tr class="{% if subdomain.status == 'Complete' %}complete{% else %}incomplete{% endif %}">
+                <td>{{ subdomain.title }}</td>
+                <td>{{ subdomain.status }}</td>
+                <td>{{ subdomain.auditor | title}}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endfor %}
+    <div class="add-entry-container">
+        <a href="{% url 'domain_selection' project.id %}" class="add-entry-link">Add New Entry</a>
+    </div>
+</div>
+{% endblock content %}

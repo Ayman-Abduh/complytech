@@ -1,5 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import ProjectMembership, Project, Subdomain, Domain, Control, Evidence
+from .models import (
+    ProjectMembership,
+    Project,
+    Subdomain,
+    Domain,
+    Control,
+    Evidence,
+    ProjectControl,
+)
 from django.urls import reverse
 from django.views import View
 from django.views.generic import ListView
@@ -86,6 +94,63 @@ def get_subdomains(request, domain_id):
         return JsonResponse({"error": "Domain not found."}, status=404)
 
 
+class ProjectOverviewView(LoginRequiredMixin, View):
+    def get(self, request, project_id):
+        project = get_object_or_404(Project, id=project_id)
+        domains = project.domains.all()
+
+        domain_data = []
+        for domain in domains:
+            subdomain_data = []
+            for subdomain in domain.subdomains.all():
+                # Step 1: Get all controls related to the subdomain
+                subdomain_controls = Control.objects.filter(subdomain=subdomain)
+
+                # Step 2: Get all project controls for the current project and controls
+                project_controls = ProjectControl.objects.filter(
+                    project=project, control__in=subdomain_controls
+                )
+
+                # Determine the subdomain's status
+                if project_controls.exists():
+                    all_complete = all(
+                        pc.status == "Complete" for pc in project_controls
+                    )
+                    status = "Complete" if all_complete else "Incomplete"
+                else:
+                    status = "Incomplete"
+
+                # Get the auditor of the subdomain
+                auditor = (
+                    project_controls.first().auditor
+                    if project_controls.exists()
+                    else None
+                )
+
+                subdomain_data.append(
+                    {
+                        "title": subdomain.name,
+                        "status": status,
+                        "auditor": auditor,
+                    }
+                )
+            domain_data.append(
+                {
+                    "domain": domain,
+                    "subdomains": subdomain_data,
+                }
+            )
+
+        return render(
+            request,
+            "project_overview.html",
+            {
+                "project": project,
+                "domain_data": domain_data,
+            },
+        )
+
+
 class AuditStartView(LoginRequiredMixin, View):
     def get(self, request, project_id, subdomain_id):
         project = get_object_or_404(Project, id=project_id)
@@ -102,7 +167,7 @@ class AuditStartView(LoginRequiredMixin, View):
         # Check if the control_index is valid
         if control_index >= len(controls):
             # Redirect to a summary or finish page if no controls are left
-            return redirect(reverse("project_list"))
+            return redirect(reverse("overview", kwargs={"project_id": project.id}))
 
         # Get the current control
         control = controls[control_index]
@@ -137,7 +202,7 @@ class AuditStartView(LoginRequiredMixin, View):
 
         if control_index >= len(controls):
             # Redirect to a summary or finish page if no controls are left
-            return redirect(reverse("project_list"))
+            return redirect(reverse("overview", kwargs={"project_id": project.id}))
 
         # Get the current control
         control = controls[control_index]
