@@ -100,7 +100,15 @@ Projects Overview
         <tbody>
             {% for subdomain in domain_info.subdomains %}
             <tr class="{% if subdomain.status == 'Complete' %}complete{% else %}incomplete{% endif %}">
-                <td>{{ subdomain.title }}</td>
+                <td>
+                    {% if subdomain.has_project_controls %}
+                    <a href="{% url 'project_control_list' project.id subdomain.id %}">
+                        {{ subdomain.title }}
+                    </a>
+                    {% else %}
+                    {{ subdomain.title }}
+                    {% endif %}
+                </td>
                 <td>{{ subdomain.status }}</td>
                 <td>{{ subdomain.auditor | title}}</td>
             </tr>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block title %}Project Control List{% endblock %}
+
+{% block content %}
+<style>
+    .container {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+        margin-bottom: 20px;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        word-break: break-word;
+        text-align: center;
+    }
+
+    .header h1 {
+        margin: 0;
+        color: #333;
+        font-weight: bold;
+    }
+
+    .header h2 {
+        margin: 0;
+        color: #333;
+    }
+
+    .control-item {
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        padding: 15px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        word-break: break-word;
+    }
+
+    .control-item h3 {
+        margin: 0 0 10px;
+        font-size: 18px;
+        color: #007bff;
+    }
+
+    .nested-container {
+        background-color: #ffffff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        padding: 10px;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        word-break: break-word;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .nested-container p {
+        margin: 5px 0;
+        font-size: 14px;
+        color: #555;
+    }
+
+    .status {
+        font-weight: bold;
+        color: #28a745;
+    }
+
+    .status.incomplete {
+        color: #dc3545;
+    }
+
+    .back-button-container {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    .back-button {
+        padding: 10px 15px;
+        font-size: 16px;
+        font-weight: bold;
+        color: white;
+        background-color: #007bff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .back-button:hover {
+        background-color: #0056b3;
+        color: white;
+    }
+</style>
+
+<div class="container">
+    <div class="header">
+        <h1>Project: {{ project.title | title}}</h1>
+        <h2>Subdomain: {{ subdomain.name }}</h2>
+    </div>
+
+    {% for control in project_controls %}
+    <div class="control-item">
+        <h3>{{ control.control.name }}</h3>
+        <div class="nested-container">
+            <p><strong>Code:</strong> {{ control.control.code }}</p>
+            <p><strong>Description:</strong> {{ control.control.description }}</p>
+        </div>
+        <p><strong>Status:</strong>
+            <span class="status {% if control.status == 'Incomplete' %}incomplete{% endif %}">
+                {{ control.status }}
+            </span>
+        </p>
+        <p><strong>Notes:</strong> {{ control.notes|default:"None" }}</p>
+        <p><strong>Risk:</strong> {{ control.risk|default:"None" }}</p>
+        <p><strong>Auditor:</strong> {{ control.auditor|default:"None" | title}}</p>
+    </div>
+    {% endfor %}
+
+    <div class="back-button-container">
+        <a href="{% url 'overview' project.id %}" class="back-button">Go Back</a>
+    </div>
+</div>
+{% endblock content %}

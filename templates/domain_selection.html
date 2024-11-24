@@ -79,7 +79,8 @@
     }
 
     .btn:hover:not(:disabled) {
-        background-color: #0d6efd;
+        background-color: #0b5ed7;
+        color: white;
     }
 </style>
 
@@ -121,6 +122,7 @@
 
         domainSelect.addEventListener("change", async () => {
             const domainId = domainSelect.value;
+            const projectId = "{{ project.id }}"; // Pass the project ID dynamically
 
             // Reset subdomain dropdown and button
             subdomainSelect.innerHTML = `
@@ -131,11 +133,9 @@
 
             if (domainId) {
                 try {
-                    const response = await fetch(`/projects/get-subdomains/${domainId}/`);
-                    const data = await response.json(); // Parse the JSON response
-                    const subdomains = data.subdomains; // Extract the subdomains array
-
-                    console.log("Subdomains response:", subdomains); // Debugging output
+                    const response = await fetch(`/projects/get_subdomains/${domainId}/${projectId}/`);
+                    const data = await response.json();
+                    const subdomains = data.subdomains;
 
                     if (Array.isArray(subdomains)) {
                         subdomains.forEach(subdomain => {
@@ -160,7 +160,6 @@
             continueButton.disabled = !subdomainSelect.value; // Enable button only if subdomain selected
         });
     });
-
 </script>
 
 {% endblock %}

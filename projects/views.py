@@ -8,10 +8,11 @@ from .models import (
     Evidence,
     ProjectControl,
 )
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import ListView
-from django.views.generic.edit import CreateView
+from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.detail import DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .forms import ProjectForm, ProjectControlForm, EvidenceForm
 from django.http import JsonResponse
@@ -80,10 +81,16 @@ class DomainSelectionView(LoginRequiredMixin, View):
         return redirect("audit_start", project_id=project_id, subdomain_id=subdomain.id)
 
 
-def get_subdomains(request, domain_id):
+def get_subdomains(request, domain_id, project_id):
     try:
         domain = Domain.objects.get(id=domain_id)
-        subdomains = domain.subdomains.all()
+
+        # Get subdomains that are not audited for the specific project
+        audited_subdomains = ProjectControl.objects.filter(
+            project_id=project_id, control__subdomain__domain=domain
+        ).values_list("control__subdomain_id", flat=True)
+        subdomains = domain.subdomains.exclude(id__in=audited_subdomains)
+
         data = {
             "subdomains": [
                 {"id": subdomain.id, "name": subdomain.name} for subdomain in subdomains
@@ -120,6 +127,9 @@ class ProjectOverviewView(LoginRequiredMixin, View):
                 else:
                     status = "Incomplete"
 
+                # Check if the subdomain has been audited
+                has_project_controls = project_controls.exists()
+
                 # Get the auditor of the subdomain
                 auditor = (
                     project_controls.first().auditor
@@ -129,9 +139,11 @@ class ProjectOverviewView(LoginRequiredMixin, View):
 
                 subdomain_data.append(
                     {
+                        "id": subdomain.id,
                         "title": subdomain.name,
                         "status": status,
                         "auditor": auditor,
+                        "has_project_controls": has_project_controls,
                     }
                 )
             domain_data.append(
@@ -261,5 +273,27 @@ class AuditStartView(LoginRequiredMixin, View):
                 "evidence_form": evidence_form,
                 "control_index": control_index,
                 "total_controls": len(controls),
+            },
+        )
+
+
+class ProjectControlListView(View):
+    def get(self, request, project_id, subdomain_id):
+        # Fetch the project and subdomain
+        project = get_object_or_404(Project, id=project_id)
+        subdomain = get_object_or_404(Subdomain, id=subdomain_id)
+
+        # Fetch all ProjectControl objects related to the given project and subdomain
+        project_controls = ProjectControl.objects.filter(
+            project=project, control__subdomain=subdomain
+        )
+
+        return render(
+            request,
+            "project_control_list.html",  # Template to display the project controls
+            {
+                "project": project,
+                "subdomain": subdomain,
+                "project_controls": project_controls,
             },
         )

@@ -6,6 +6,7 @@ from .views import (
     AuditStartView,
     ProjectOverviewView,
     get_subdomains,
+    ProjectControlListView,
 )
 
 urlpatterns = [
@@ -21,10 +22,19 @@ urlpatterns = [
         DomainSelectionView.as_view(),
         name="domain_selection",
     ),
-    path("get-subdomains/<int:domain_id>/", get_subdomains, name="get_subdomains"),
+    path(
+        "get_subdomains/<int:domain_id>/<int:project_id>/",
+        get_subdomains,
+        name="get_subdomains",
+    ),
     path(
         "project/<int:project_id>/audit_start/<int:subdomain_id>/",
         AuditStartView.as_view(),
         name="audit_start",
+    ),
+    path(
+        "projects/<int:project_id>/subdomains/<int:subdomain_id>/project-controls/",
+        ProjectControlListView.as_view(),
+        name="project_control_list",
     ),
 ]
