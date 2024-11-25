@@ -7,6 +7,8 @@ from .views import (
     ProjectOverviewView,
     get_subdomains,
     ProjectControlListView,
+    ProjectControlEditView,
+    EvidenceListView,
 )
 
 urlpatterns = [
@@ -36,5 +38,15 @@ urlpatterns = [
         "projects/<int:project_id>/subdomains/<int:subdomain_id>/project-controls/",
         ProjectControlListView.as_view(),
         name="project_control_list",
+    ),
+    path(
+        "project_control/edit/<int:pk>/",
+        ProjectControlEditView.as_view(),
+        name="project_control_edit",
+    ),
+    path(
+        "project_control/<int:pk>/evidence/",
+        EvidenceListView.as_view(),
+        name="project_control_evidence",
     ),
 ]

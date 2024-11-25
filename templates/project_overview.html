@@ -73,6 +73,7 @@ Projects Overview
         font-size: 16px;
         text-align: center;
         transition: background-color 0.3s ease;
+        font-weight: bold;
     }
 
     .add-entry-link:hover {
@@ -117,7 +118,10 @@ Projects Overview
     </table>
     {% endfor %}
     <div class="add-entry-container">
-        <a href="{% url 'domain_selection' project.id %}" class="add-entry-link">Add New Entry</a>
+        <a href="{% url 'domain_selection' project.id %}" class="add-entry-link">Add New Entry +</a>
+    </div>
+    <div class="add-entry-container">
+        <a href="{% url 'project_list' %}" class="add-entry-link">Go Back</a>
     </div>
 </div>
 {% endblock content %}

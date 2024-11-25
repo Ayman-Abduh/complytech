@@ -17,8 +17,6 @@
     .header {
         margin-bottom: 20px;
         overflow-wrap: break-word;
-        word-wrap: break-word;
-        word-break: break-word;
         text-align: center;
     }
 
@@ -41,8 +39,6 @@
         padding: 15px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         overflow-wrap: break-word;
-        word-wrap: break-word;
-        word-break: break-word;
     }
 
     .control-item h3 {
@@ -58,9 +54,6 @@
         margin-top: 10px;
         margin-bottom: 10px;
         padding: 10px;
-        overflow-wrap: break-word;
-        word-wrap: break-word;
-        word-break: break-word;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
@@ -77,6 +70,40 @@
 
     .status.incomplete {
         color: #dc3545;
+    }
+
+    .action-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+    }
+
+    .action-buttons a {
+        padding: 10px 15px;
+        font-size: 14px;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        text-decoration: none;
+        text-align: center;
+        display: inline-block;
+    }
+
+    .edit-button {
+        background-color: #0d6efd;
+        font-weight: bold;
+    }
+
+    .edit-button:hover {
+        background-color: #0056b3;
+    }
+
+    .evidence-button {
+        background-color: #6c757d;
+    }
+
+    .evidence-button:hover {
+        background-color: #495057;
     }
 
     .back-button-container {
@@ -104,7 +131,7 @@
 
 <div class="container">
     <div class="header">
-        <h1>Project: {{ project.title | title}}</h1>
+        <h1>Project: {{ project.title | title }}</h1>
         <h2>Subdomain: {{ subdomain.name }}</h2>
     </div>
 
@@ -122,7 +149,13 @@
         </p>
         <p><strong>Notes:</strong> {{ control.notes|default:"None" }}</p>
         <p><strong>Risk:</strong> {{ control.risk|default:"None" }}</p>
-        <p><strong>Auditor:</strong> {{ control.auditor|default:"None" | title}}</p>
+        <p><strong>Auditor:</strong> {{ control.auditor|default:"None" | title }}</p>
+        <div class="action-buttons">
+            {% if control.auditor == request.user %}
+            <a href="{% url 'project_control_edit' control.id %}" class="edit-button">Edit</a>
+            {% endif %}
+            <a href="{% url 'project_control_evidence' control.id %}" class="evidence-button">See Evidence</a>
+        </div>
     </div>
     {% endfor %}
 

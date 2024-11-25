@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block title %}Evidence List{% endblock %}
+
+{% block content %}
+<style>
+    .container {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    h1,
+    h2 {
+        font-weight: bold;
+    }
+
+    .evidence-item {
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        padding: 15px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .evidence-item p {
+        margin: 5px 0;
+    }
+
+    .back-button-container {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    .back-button {
+        padding: 10px 15px;
+        font-size: 16px;
+        font-weight: bold;
+        color: white;
+        background-color: #007bff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .back-button:hover {
+        background-color: #0056b3;
+        color: white;
+    }
+</style>
+
+<div class="container">
+    <div class="header">
+        <h1>Project: {{ project_control.project.title | title}}</h1>
+        <h2>Evidence for Control: {{ project_control.control.code }}</h2>
+    </div>
+
+    {% for evidence in evidences %}
+    <div class="evidence-item">
+        <p><strong>Document Name:</strong> {{ evidence.document_name }}</p>
+        <p><strong>SHA-256 Hash:</strong> {{ evidence.sha_hash }}</p>
+        <p><strong>Uploaded By:</strong> {{ evidence.uploaded_by.username | title}}</p>
+        <p><strong>Uploaded At:</strong> {{ evidence.uploaded_at }}</p>
+    </div>
+    {% empty %}
+    <p>No evidence available for this control.</p>
+    {% endfor %}
+
+    <div class="back-button-container">
+        <a href="{% url 'project_control_list' project_control.project.id project_control.control.subdomain.id %}"
+            class="back-button">Back to Project Controls</a>
+    </div>
+</div>
+{% endblock content %}

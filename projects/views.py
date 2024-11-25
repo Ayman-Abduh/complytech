@@ -297,3 +297,36 @@ class ProjectControlListView(View):
                 "project_controls": project_controls,
             },
         )
+
+
+class ProjectControlEditView(LoginRequiredMixin, UpdateView):
+    model = ProjectControl
+    template_name = "project_control_edit.html"
+    fields = ["notes", "status", "risk"]
+    context_object_name = "project_control"
+
+    def get_success_url(self):
+        # Redirect back to the project control list view for the subdomain and project
+        project_id = self.object.project.id
+        subdomain_id = self.object.control.subdomain.id
+        return reverse_lazy(
+            "project_control_list",
+            kwargs={"project_id": project_id, "subdomain_id": subdomain_id},
+        )
+
+
+class EvidenceListView(LoginRequiredMixin, ListView):
+    model = Evidence
+    template_name = "evidence_list.html"
+    context_object_name = "evidences"
+
+    def get_queryset(self):
+        # Fetch the ProjectControl object based on the provided primary key (pk)
+        project_control = ProjectControl.objects.get(pk=self.kwargs["pk"])
+        # Return all related evidence objects using the `evidences` related_name
+        return project_control.evidences.all()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project_control"] = ProjectControl.objects.get(pk=self.kwargs["pk"])
+        return context
