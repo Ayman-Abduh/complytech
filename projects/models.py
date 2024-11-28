@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.timezone import now, timedelta
 
 # Create your models here.
 
@@ -110,3 +111,33 @@ class Evidence(models.Model):
         return (
             f"Evidence for {self.project_control.control.code} - {self.document_name}"
         )
+
+
+def default_expiration():
+    """Returns the default expiration time for an invitation."""
+    return now() + timedelta(days=7)
+
+
+class Invitation(models.Model):
+    token = models.CharField(max_length=64, unique=True)  # Store the unique token
+    project = models.ForeignKey(
+        "Project", on_delete=models.CASCADE, related_name="invitations"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )  # Track when the invitation was created
+    expires_at = models.DateTimeField(
+        default=default_expiration
+    )  # Default expiration: 7 days
+    invited_by = models.ForeignKey("auth.User", on_delete=models.SET_NULL, null=True)
+    status = models.CharField(
+        max_length=10,
+        choices=[("Pending", "Pending"), ("Used", "Used"), ("Rejected", "Rejected")],
+        default="Pending",
+    )
+
+    def is_valid(self):
+        return self.status == "Pending" and now() < self.expires_at
+
+    def __str__(self):
+        return f"Invitation to {self.project.title} (Token: {self.token})"

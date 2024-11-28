@@ -72,7 +72,7 @@ Projects List
         {% if manager_projects %}
         {% for project in manager_projects %}
         <tr>
-            <td><a href="#">{{ project.project.title | title }}</a></td>
+            <td><a href="{% url 'project_management' project.project.id %}">{{ project.project.title | title }}</a></td>
             <td>{{ project.project.description }}</td>
         </tr>
         {% endfor %}

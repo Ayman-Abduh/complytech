@@ -7,10 +7,13 @@ from .models import (
     Control,
     Evidence,
     ProjectControl,
+    Invitation,
 )
+import uuid
+from django.contrib.auth.decorators import login_required
 from django.urls import reverse, reverse_lazy
 from django.views import View
-from django.views.generic import ListView
+from django.views.generic import ListView, TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.detail import DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -330,3 +333,121 @@ class EvidenceListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context["project_control"] = ProjectControl.objects.get(pk=self.kwargs["pk"])
         return context
+
+
+def generate_invitation(request, project_id):
+    project = get_object_or_404(Project, id=project_id)
+    if request.method == "POST":
+        # Generate a unique token
+        token = uuid.uuid4().hex
+        # Create an invitation in the database
+        Invitation.objects.create(
+            token=token,
+            project=project,
+            invited_by=request.user,  # Record who sent the invite
+        )
+        # Construct the invitation link
+        invitation_link = request.build_absolute_uri(f"/invite/{token}/")
+        return render(request, "invitation_success.html", {"link": invitation_link})
+    return render(request, "generate_invitation.html", {"project": project})
+
+
+def handle_invitation(request, token):
+    # Retrieve the invitation or return a 404 if not found
+    invitation = get_object_or_404(Invitation, token=token)
+
+    # Check if the invitation is already used or expired
+    if not invitation.is_valid():
+        return render(request, "invitation_invalid.html")  # Display an error page
+
+    # Check if the user is already a member of the project
+    existing_membership = ProjectMembership.objects.filter(
+        user=request.user, project=invitation.project
+    ).exists()
+    if existing_membership:
+        return redirect(
+            "overview", invitation.project.id
+        )  # Redirect to the overview if already a member
+
+    if request.method == "POST":
+        if "accept" in request.POST:
+            # Add the user to the project as an Auditor
+            ProjectMembership.objects.create(
+                user=request.user,
+                project=invitation.project,
+                role="Auditor",
+            )
+            # Mark the invitation as used
+            invitation.status = "Used"
+            invitation.save()
+
+            # Redirect to the project overview
+            return redirect("overview", invitation.project.id)
+        elif "reject" in request.POST:
+            # Optionally mark the invitation as "Rejected" or just leave it as is
+            invitation.status = "Rejected"
+            invitation.save()
+            return redirect("home")  # Redirect to the home page or a different page
+
+    # Render the invitation acceptance/rejection page
+    return render(request, "handle_invitation.html", {"invitation": invitation})
+
+
+class ProjectManagementView(TemplateView):
+    template_name = "project_management.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_id = kwargs.get("project_id")
+
+        # Get the project
+        project = get_object_or_404(Project, id=project_id)
+        context["project"] = project
+
+        subdomain_progress = []
+
+        # Iterate through each domain in the project
+        for domain in project.domains.all():
+            domain_subdomain_progress = []
+
+            # Iterate through subdomains related to the current domain
+            for subdomain in domain.subdomains.all():
+                controls = ProjectControl.objects.filter(
+                    project=project, control__subdomain=subdomain
+                )
+                total_controls = controls.count()
+                completed_controls = controls.filter(status="Complete").count()
+                progress_percentage = (
+                    (completed_controls / total_controls) * 100
+                    if total_controls > 0
+                    else 0
+                )
+
+                domain_subdomain_progress.append(
+                    {
+                        "subdomain": subdomain,
+                        "completed_controls": completed_controls,
+                        "total_controls": total_controls,
+                        "progress": progress_percentage,
+                    }
+                )
+
+            # Add the subdomain progress for this domain
+            subdomain_progress.append(
+                {
+                    "domain": domain,
+                    "subdomain_progress": domain_subdomain_progress,
+                }
+            )
+
+        context["subdomain_progress"] = subdomain_progress
+
+        # Get project members
+        members = ProjectMembership.objects.filter(project=project)
+        context["members"] = members
+
+        return context
+
+
+def manage_members(request, project_id):
+    pass

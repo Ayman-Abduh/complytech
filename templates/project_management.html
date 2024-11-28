@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+{% extends "base.html" %}
+
+{% block title %}Manage {{ project.title }}{% endblock %}
+
+{% block content %}
+<style>
+    .container {
+        margin: 20px auto;
+        max-width: 800px;
+        font-family: Arial, sans-serif;
+    }
+
+    .container h1 {
+        text-align: center;
+        margin-bottom: 20px;
+        font-weight: bold;
+    }
+
+    .section {
+        margin-bottom: 30px;
+        border: 1px solid #ddd;
+        padding: 15px;
+        border-radius: 5px;
+    }
+
+    .section h2 {
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    table th,
+    table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+
+    table th {
+        background-color: #f4f4f4;
+    }
+
+    .btn {
+        padding: 10px 15px;
+        font-size: 14px;
+        color: white;
+        background-color: #007bff;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+    }
+
+    .btn:hover {
+        background-color: #0056b3;
+        color: white;
+    }
+</style>
+
+<div class="container">
+    <h1>Project: {{ project.title | title}}</h1>
+
+    <!-- Subdomain Progress Section -->
+    <div class="section">
+        <h2>Progress</h2>
+
+        {% for item in subdomain_progress %}
+        <h3>Domain: {{ item.domain.name }}</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Subdomain</th>
+                    <th>Completed Controls</th>
+                    <th>Total Controls</th>
+                    <th>Progress (%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub_item in item.subdomain_progress %}
+                <tr>
+                    <td><strong>{{ sub_item.subdomain.name }}</strong></td>
+                    <td>{{ sub_item.completed_controls }}</td>
+                    <td>
+                        {% if sub_item.total_controls == 0 %}
+                        Not Assigned
+                        {% else %}
+                        {{ sub_item.total_controls }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if sub_item.total_controls == 0 %}
+                        Not Available
+                        {% else %}
+                        {{ sub_item.progress|floatformat:2 }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endfor %}
+
+        <div class="btn-container" style="text-align: center;">
+            <a href="{% url 'overview' project.id %}" class="btn">View Details</a>
+        </div>
+    </div>
+
+    <!-- Project Members Section -->
+    <div class="section">
+        <h2>Project Members</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Joined At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for member in members %}
+                <tr>
+                    <td>{{ member.user.username | title}}</td>
+                    <td>{{ member.role }}</td>
+                    <td>{{ member.joined_at|date:"Y-m-d H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="btn-container" style="text-align: center;">
+            <a href="{% url 'manage_members' project.id %}" class="btn">Manage Members</a>
+        </div>
+    </div>
+
+    <!-- Generate Report Section -->
+    <div class="section">
+        <h2>Generate Project Report</h2>
+        <p>
+            <a href="#" class="btn">Generate Report</a>
+        </p>
+    </div>
+</div>
+{% endblock content %}

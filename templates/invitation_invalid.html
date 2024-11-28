@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% block title %}invitation_invalid{% endblock title %}
+{% block content %}
+<h1>Invalid Invitation</h1>
+<p>{{ error }}</p>
+<a href="{% url 'homepage' %}">Go to Homepage</a>
+{% endblock content %}
