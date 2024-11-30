@@ -12,6 +12,7 @@ from .views import (
     handle_invitation,
     ProjectManagementView,
     ManageMembersView,
+    generate_project_report,
 )
 
 urlpatterns = [
@@ -62,5 +63,10 @@ urlpatterns = [
         "project/<int:project_id>/manage/members/",
         ManageMembersView.as_view(),
         name="manage_members",
+    ),
+    path(
+        "project/<int:project_id>/report/",
+        generate_project_report,
+        name="generate_project_report",
     ),
 ]

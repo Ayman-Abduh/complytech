@@ -1,4 +1,22 @@
+# Django
+
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.urls import reverse, reverse_lazy
+from django.http import HttpResponse
+from django.views import View
+from django.views.generic import ListView, TemplateView
+from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.detail import DetailView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from .forms import ProjectForm, ProjectControlForm, EvidenceForm
+from django.http import JsonResponse
+from django.template.loader import render_to_string
+
+# Hashing Lib
+import hashlib
+
+# My Models
 from .models import (
     ProjectMembership,
     Project,
@@ -9,20 +27,12 @@ from .models import (
     ProjectControl,
     Invitation,
 )
+
+# UUID Package
 import uuid
-from django.contrib.auth.decorators import login_required
-from django.urls import reverse, reverse_lazy
-from django.views import View
-from django.views.generic import ListView, TemplateView
-from django.views.generic.edit import CreateView, UpdateView
-from django.views.generic.detail import DetailView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from .forms import ProjectForm, ProjectControlForm, EvidenceForm
-from django.http import JsonResponse
-import hashlib
 
-
-# Create your views here.
+# weasyprint
+from weasyprint import HTML
 
 
 class ProjectListView(LoginRequiredMixin, ListView):
@@ -483,3 +493,74 @@ def handle_invitation(request, token):
 
     # Render the invitation acceptance/rejection page
     return render(request, "handle_invitation.html", {"invitation": invitation})
+
+
+def generate_project_report(request, project_id):
+    # Fetch the project and its memberships
+    project = Project.objects.get(id=project_id)
+    project_members = ProjectMembership.objects.filter(project=project)
+
+    # Prepare a dictionary for domains with their subdomains classified as audited or unaudited
+    domain_subdomains = {}
+
+    # Loop through the project's domains and subdomains
+    for domain in project.domains.all():
+        # Initialize a dictionary to hold audited and unaudited subdomains for this domain
+        audited_subdomains = []
+        unaudited_subdomains = []
+
+        for subdomain in domain.subdomains.all():
+            # Fetch all ProjectControl objects (both "Complete" and "Incomplete") for the subdomain
+            project_controls = ProjectControl.objects.filter(
+                control__subdomain=subdomain, project=project
+            )
+
+            # Check if all controls are complete
+            all_complete = all(
+                control.status == "Complete" for control in project_controls
+            )
+
+            # Classify the subdomain as audited or unaudited
+            if project_controls.exists():
+                audited_subdomains.append(
+                    {
+                        "subdomain": subdomain,
+                        "project_controls": project_controls,
+                        "all_complete": all_complete,  # Pass the completeness status
+                    }
+                )
+            else:
+                unaudited_subdomains.append(
+                    {
+                        "subdomain": subdomain,
+                        "project_controls": [],
+                        "all_complete": False,  # Mark as incomplete if not audited
+                    }
+                )
+
+        # Add both audited and unaudited subdomains to the domain's entry in the dictionary
+        domain_subdomains[domain] = {
+            "audited_subdomains": audited_subdomains,
+            "unaudited_subdomains": unaudited_subdomains,
+        }
+
+    # Render the HTML content with the context data
+    html_content = render_to_string(
+        "project_report.html",
+        {
+            "project": project,
+            "project_members": project_members,
+            "domain_subdomains": domain_subdomains,
+        },
+    )
+
+    # Convert the HTML to PDF using WeasyPrint
+    pdf_file = HTML(string=html_content).write_pdf()
+
+    # Create a response with the PDF file
+    response = HttpResponse(pdf_file, content_type="application/pdf")
+    response["Content-Disposition"] = (
+        f'attachment; filename="{project.title}_report.pdf"'
+    )
+
+    return response

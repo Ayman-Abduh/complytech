@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ project.title | title }} Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+        }
+
+        .container {
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        table th,
+        table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #f4f4f4;
+        }
+
+        .complete {
+            color: green;
+            font-weight: bold;
+        }
+
+        .incomplete {
+            color: red;
+            font-weight: bold;
+        }
+
+        ul {
+            list-style-type: disc;
+            margin-left: 20px;
+        }
+
+        li {
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>{{ project.title | title }} Report</h1>
+
+        <!-- Project Information -->
+        <div class="section">
+            <h2>Project Information</h2>
+            <p><strong>Title:</strong> {{ project.title | title }}</p>
+            <p><strong>Description:</strong> {{ project.description }}</p>
+            <p><strong>Scope:</strong> {{ project.scope }}</p>
+            <p><strong>Budget:</strong> ${{ project.budget }}</p>
+            <p><strong>Estimated Finish Date:</strong> {{ project.estimated_finish_date }}</p>
+        </div>
+
+        <!-- Project Participants -->
+        <div class="section">
+            <h2>Project Participants</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Role</th>
+                        <th>Joined At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in project_members %}
+                    <tr>
+                        <td>{{ member.user.username | title }}</td>
+                        <td>{{ member.role }}</td>
+                        <td>{{ member.joined_at | date:"Y-m-d" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Domains and their Subdomains -->
+        <div class="section">
+            {% for domain, subdomains in domain_subdomains.items %}
+            <div class="domain">
+                <h2>Domain: {{ domain.name }}</h2>
+
+                <!-- Display Audited Subdomains -->
+                <div class="audited-subdomains">
+                    <h3>Audited Subdomains:</h3>
+                    {% if subdomains.audited_subdomains %}
+                    {% for subdomain_data in subdomains.audited_subdomains %}
+                    <div class="subdomain">
+                        <h4>Subdomain: {{ subdomain_data.subdomain.name }}
+                            {% if subdomain_data.all_complete %}
+                            <span class="complete">(Complete)</span>
+                            {% else %}
+                            <span class="incomplete">(Incomplete)</span>
+                            {% endif %}
+                        </h4>
+                        <!-- Table of Project Controls for each Audited Subdomain -->
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Control</th>
+                                    <th>Auditor</th>
+                                    <th>Status</th>
+                                    <th>Notes</th>
+                                    <th>Risk</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for projectcontrol in subdomain_data.project_controls %}
+                                <tr>
+                                    <td>{{ projectcontrol.control.code }}</td>
+                                    <td>{{ projectcontrol.auditor.username | title }}</td>
+                                    <td>{{ projectcontrol.status }}</td>
+                                    <td>
+                                        {% if projectcontrol.notes %}
+                                        {{ projectcontrol.notes }}
+                                        {% else %}
+                                        N/A
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if projectcontrol.risk %}
+                                        {{ projectcontrol.risk }}
+                                        {% else %}
+                                        N/A
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <p style="color: red;">None</p>
+                    {% endif %}
+                </div>
+
+                <!-- Only Display Un-audited Subdomains Section If There Are Any -->
+                {% if subdomains.unaudited_subdomains %}
+                <div class="unaudited-subdomains">
+                    <h3>Unaudited Subdomains:</h3>
+                    <ul>
+                        {% for subdomain_data in subdomains.unaudited_subdomains %}
+                        <li>{{ subdomain_data.subdomain.name }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+</body>
+
+</html>
