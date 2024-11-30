@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block title %}Manage Members{% endblock %}
+
+{% block content %}
+<style>
+    .container {
+        margin: 20px auto;
+        max-width: 800px;
+        font-family: Arial, sans-serif;
+    }
+
+    .section {
+        margin-bottom: 30px;
+        border: 1px solid #ddd;
+        padding: 15px;
+        border-radius: 5px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+    table th,
+    table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+
+    table th {
+        background-color: #f4f4f4;
+    }
+
+    .btn {
+        padding: 8px 12px;
+        font-size: 14px;
+        color: white;
+        background-color: #007bff;
+        text-decoration: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .remove-member-btn {
+        background-color: #e74c3c;
+        /* Red background */
+        color: white;
+        padding: 8px 12px;
+        font-size: 14px;
+        text-decoration: none;
+        border-radius: 5px;
+        cursor: pointer;
+        border: none;
+        width: 100%;
+        /* Make the button take up the full width of its parent */
+        max-width: 150px;
+        /* Limit the button width */
+        margin: 0 auto;
+        /* Center the button */
+        display: block;
+        /* Make the button a block-level element for centering */
+    }
+
+    .remove-member-btn:hover {
+        background-color: #c0392b;
+        /* Darker red when hovered */
+    }
+
+    .btn:hover {
+        background-color: #0056b3;
+    }
+</style>
+
+<div class="container">
+    <h1>Manage Members for {{ project.title | title}}</h1>
+
+    <!-- Members Section -->
+    <div class="section">
+        <h2>Auditors</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Joined At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if members %}
+                {% for member in members %}
+                <tr>
+                    <td>{{ member.user.username | title }}</td>
+                    <td>{{ member.role }}</td>
+                    <td>{{ member.joined_at|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        <form method="POST" action="">
+                            {% csrf_token %}
+                            <input type="hidden" name="user_id" value="{{ member.user.id }}">
+                            <button class="remove-member-btn" type="submit" name="remove_member">
+                                Remove
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center; font-style: italic; color: #888;">
+                        No members found in this project.
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+
+        </table>
+    </div>
+
+    <!-- Invitation Section -->
+    <div class="section">
+        <h2>Generate Invitation Link</h2>
+        <form id="invitation-form" method="POST" action="">
+            {% csrf_token %}
+            <button class="btn" type="submit" name="generate_invitation">Generate Invitation</button>
+        </form>
+        <div id="invitation-container" style="margin-top: 15px; display: none;">
+            <label for="invitation-link" style="font-weight: bold; display: block; margin-bottom: 5px;">
+                Your Invitation Link:
+            </label>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="text" id="invitation-link" readonly
+                    style="flex-grow: 1; padding: 8px; border: 1px solid #ddd; border-radius: 5px;" />
+                <button id="copy-link-btn" class="btn"
+                    style="padding: 8px 12px; font-size: 14px; background-color: #28a745;">
+                    Copy
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Handle Member Removal
+    document.querySelectorAll(".remove-member-btn").forEach((button) => {
+        button.addEventListener("click", function (e) {
+            e.preventDefault();
+            const form = this.closest("form");
+            const formData = new FormData(form);
+
+            fetch("", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}", // Ensure CSRF token is included
+                },
+                body: formData,
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.status === "success") {
+                        location.reload(); // Reload the page after member removal
+                    } else {
+                        alert(data.message); // Show error message
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                    alert("An error occurred while removing the member.");
+                });
+        });
+    });
+    document.getElementById("invitation-form").addEventListener("submit", function (e) {
+        e.preventDefault(); // Prevent the default form submission
+        const formData = new FormData(this);
+        formData.append("generate_invitation", "true"); // Explicitly add the field
+
+        fetch("", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}", // Include CSRF token
+            },
+            body: formData,
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.status === "success") {
+                    const linkInput = document.getElementById("invitation-link");
+                    linkInput.value = data.link;
+
+                    // Show the invitation container
+                    document.getElementById("invitation-container").style.display = "block";
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+                alert("An error occurred while generating the invitation.");
+            });
+    });
+
+    // Copy link to clipboard
+    document.getElementById("copy-link-btn").addEventListener("click", function () {
+        const linkInput = document.getElementById("invitation-link");
+        linkInput.select();
+        linkInput.setSelectionRange(0, 99999); // For mobile devices
+        document.execCommand("copy");
+        alert("Invitation link copied to clipboard!");
+    });
+</script>
+{% endblock content %}

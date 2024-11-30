@@ -10,9 +10,8 @@ from .views import (
     ProjectControlEditView,
     EvidenceListView,
     handle_invitation,
-    generate_invitation,
     ProjectManagementView,
-    manage_members,
+    ManageMembersView,
 )
 
 urlpatterns = [
@@ -53,11 +52,6 @@ urlpatterns = [
         EvidenceListView.as_view(),
         name="project_control_evidence",
     ),
-    path(
-        "project/<int:project_id>/generate-invitation/",
-        generate_invitation,
-        name="generate_invitation",
-    ),
     path("invite/<str:token>/", handle_invitation, name="handle_invitation"),
     path(
         "project/<int:project_id>/manage/",
@@ -66,7 +60,7 @@ urlpatterns = [
     ),
     path(
         "project/<int:project_id>/manage/members/",
-        manage_members,
+        ManageMembersView.as_view(),
         name="manage_members",
     ),
 ]

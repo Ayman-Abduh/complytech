@@ -7,6 +7,7 @@ from .models import (
     ProjectMembership,
     ProjectControl,
     Evidence,
+    Invitation,
 )
 
 
@@ -47,3 +48,4 @@ admin.site.register(Project)
 admin.site.register(ProjectMembership)
 admin.site.register(ProjectControl)
 admin.site.register(Evidence)
+admin.site.register(Invitation)

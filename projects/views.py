@@ -335,64 +335,6 @@ class EvidenceListView(LoginRequiredMixin, ListView):
         return context
 
 
-def generate_invitation(request, project_id):
-    project = get_object_or_404(Project, id=project_id)
-    if request.method == "POST":
-        # Generate a unique token
-        token = uuid.uuid4().hex
-        # Create an invitation in the database
-        Invitation.objects.create(
-            token=token,
-            project=project,
-            invited_by=request.user,  # Record who sent the invite
-        )
-        # Construct the invitation link
-        invitation_link = request.build_absolute_uri(f"/invite/{token}/")
-        return render(request, "invitation_success.html", {"link": invitation_link})
-    return render(request, "generate_invitation.html", {"project": project})
-
-
-def handle_invitation(request, token):
-    # Retrieve the invitation or return a 404 if not found
-    invitation = get_object_or_404(Invitation, token=token)
-
-    # Check if the invitation is already used or expired
-    if not invitation.is_valid():
-        return render(request, "invitation_invalid.html")  # Display an error page
-
-    # Check if the user is already a member of the project
-    existing_membership = ProjectMembership.objects.filter(
-        user=request.user, project=invitation.project
-    ).exists()
-    if existing_membership:
-        return redirect(
-            "overview", invitation.project.id
-        )  # Redirect to the overview if already a member
-
-    if request.method == "POST":
-        if "accept" in request.POST:
-            # Add the user to the project as an Auditor
-            ProjectMembership.objects.create(
-                user=request.user,
-                project=invitation.project,
-                role="Auditor",
-            )
-            # Mark the invitation as used
-            invitation.status = "Used"
-            invitation.save()
-
-            # Redirect to the project overview
-            return redirect("overview", invitation.project.id)
-        elif "reject" in request.POST:
-            # Optionally mark the invitation as "Rejected" or just leave it as is
-            invitation.status = "Rejected"
-            invitation.save()
-            return redirect("home")  # Redirect to the home page or a different page
-
-    # Render the invitation acceptance/rejection page
-    return render(request, "handle_invitation.html", {"invitation": invitation})
-
-
 class ProjectManagementView(TemplateView):
     template_name = "project_management.html"
 
@@ -449,5 +391,95 @@ class ProjectManagementView(TemplateView):
         return context
 
 
-def manage_members(request, project_id):
-    pass
+class ManageMembersView(LoginRequiredMixin, TemplateView):
+    template_name = "manage_members.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_id = kwargs.get("project_id")
+
+        # Get the project
+        project = get_object_or_404(Project, id=project_id)
+        context["project"] = project
+
+        # Get project members
+        members = ProjectMembership.objects.filter(project=project, role="Auditor")
+        context["members"] = members
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+        project_id = kwargs.get("project_id")
+        project = get_object_or_404(Project, id=project_id)
+
+        # Handle removing a member
+        if "user_id" in request.POST:
+            user_id = request.POST.get("user_id")
+            membership = ProjectMembership.objects.filter(
+                user_id=user_id, project=project
+            ).first()
+            if membership:
+                membership.delete()
+                return JsonResponse({"status": "success", "message": "Member removed."})
+            else:
+                return JsonResponse(
+                    {"status": "error", "message": "Membership not found."}
+                )
+
+        # Handle generating an invitation link
+        elif "generate_invitation" in request.POST:
+            token = uuid.uuid4().hex
+            Invitation.objects.create(
+                token=token, project=project, invited_by=request.user
+            )
+            invitation_link = request.build_absolute_uri(
+                reverse("handle_invitation", kwargs={"token": token})
+            )
+            return JsonResponse({"status": "success", "link": invitation_link})
+
+        return JsonResponse({"status": "error", "message": "Invalid request."})
+
+
+@login_required
+def handle_invitation(request, token):
+    # Retrieve the invitation or return a 404 if not found
+    invitation = get_object_or_404(Invitation, token=token)
+
+    # Check if the invitation is already used or expired
+    if not invitation.is_valid():
+        return render(request, "invitation_invalid.html")  # Display an error page
+
+    # Check if the user is already a member of the project
+    existing_membership = ProjectMembership.objects.filter(
+        user=request.user, project=invitation.project
+    ).exists()
+    if existing_membership:
+        invitation.status = "Used"
+        invitation.save()
+
+        return redirect(
+            "overview", invitation.project.id
+        )  # Redirect to the overview if already a member
+
+    if request.method == "POST":
+        if "accept" in request.POST:
+            # Add the user to the project as an Auditor
+            ProjectMembership.objects.create(
+                user=request.user,
+                project=invitation.project,
+                role="Auditor",
+            )
+            # Mark the invitation as used
+            invitation.status = "Used"
+            invitation.save()
+
+            # Redirect to the project overview
+            return redirect("overview", invitation.project.id)
+        elif "reject" in request.POST:
+            # Optionally mark the invitation as "Rejected" or just leave it as is
+            invitation.status = "Rejected"
+            invitation.save()
+            return redirect("home")  # Redirect to the home page or a different page
+
+    # Render the invitation acceptance/rejection page
+    return render(request, "handle_invitation.html", {"invitation": invitation})
