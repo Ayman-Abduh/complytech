@@ -7,7 +7,6 @@ from django.http import HttpResponse
 from django.views import View
 from django.views.generic import ListView, TemplateView
 from django.views.generic.edit import CreateView, UpdateView
-from django.views.generic.detail import DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .forms import ProjectForm, ProjectControlForm, EvidenceForm
 from django.http import JsonResponse
